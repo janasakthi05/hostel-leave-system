@@ -12,7 +12,11 @@ const leaveRequestSchema = new mongoose.Schema({
   },
   rejectionReason: String,
   rejectedAt: Date,
-  approvedAt: Date
+  approvedAt: Date,
+    qrToken: String,
+  qrGeneratedAt: Date,
+  exitTime: Date
+
 });
 
 module.exports = mongoose.model("LeaveRequest", leaveRequestSchema);
