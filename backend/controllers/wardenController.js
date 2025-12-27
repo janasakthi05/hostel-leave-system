@@ -3,8 +3,20 @@ const crypto = require("crypto");
 
 // View pending requests
 exports.getPendingRequests = async (req, res) => {
-  const requests = await LeaveRequest.find({ status: "PENDING" })
-    .populate("studentId", "name email");
+  const twentyFourHoursAgo = new Date(
+    Date.now() - 24 * 60 * 60 * 1000
+  );
+
+  const requests = await LeaveRequest.find({
+    $or: [
+      { status: "PENDING" },
+      {
+        status: "REJECTED",
+        rejectedAt: { $gte: twentyFourHoursAgo }
+      }
+    ]
+  }).populate("studentId", "name email");
+
   res.json(requests);
 };
 

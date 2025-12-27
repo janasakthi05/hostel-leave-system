@@ -19,3 +19,5 @@ app.listen(5000, () => {
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/student", require("./routes/studentRoutes"));
 app.use("/api/qr", require("./routes/qrRoutes"));
+app.use("/api/security", require("./routes/securityRoutes"));
+app.use("/uploads", express.static("uploads"));

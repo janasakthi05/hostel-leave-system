@@ -1,18 +1,21 @@
-const jwt = require("jsonwebtoken");
+const express = require("express");
+const router = express.Router();
 
-module.exports = function (req, res, next) {
-  const token = req.header("Authorization");
+const {
+  applyLeave,
+  myLeaves,
+  deleteLeave
+} = require("../controllers/studentController");
 
-  if (!token) return res.status(401).json({ message: "No token" });
+const authStudent = require("../middleware/studentAuthMiddleware");
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== "WARDEN") {
-      return res.status(403).json({ message: "Access denied" });
-    }
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
-  }
-};
+// Apply leave
+router.post("/apply-leave", authStudent, applyLeave);
+
+// View my leaves
+router.get("/my-leaves", authStudent, myLeaves);
+
+// ✅ Delete pending leave (STUDENT ONLY)
+router.delete("/leave/:id", authStudent, deleteLeave);
+
+module.exports = router;
