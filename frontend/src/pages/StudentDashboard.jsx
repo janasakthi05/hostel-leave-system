@@ -24,7 +24,7 @@ export default function StudentDashboard() {
   const fetchLeaves = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/student/my-leaves",
+        "https://hostel-backend-2fw3.onrender.com/api/student/my-leaves",
         {
           headers: {
             Authorization: `Bearer ${token}` // ✅ FIXED
@@ -46,7 +46,7 @@ export default function StudentDashboard() {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:5000/api/student/apply-leave",
+        "https://hostel-backend-2fw3.onrender.com/api/student/apply-leave",
         { purpose, fromDate, toDate },
         {
           headers: {
@@ -150,7 +150,7 @@ export default function StudentDashboard() {
 
                   try {
                     await axios.delete(
-                      `http://localhost:5000/api/student/leave/${leave._id}`,
+                      `https://hostel-backend-2fw3.onrender.com/api/student/leave/${leave._id}`,
                       {
                         headers: {
                           Authorization: `Bearer ${token}` // ✅ FIXED

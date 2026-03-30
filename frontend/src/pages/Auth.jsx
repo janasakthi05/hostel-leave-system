@@ -4,7 +4,7 @@ import axios from "axios";
 import "../styles/Auth.css";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api"
+  baseURL: "https://hostel-backend-2fw3.onrender.com/api"
 });
 
 export default function Auth() {

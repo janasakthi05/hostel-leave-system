@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api"
+  baseURL: "https://hostel-backend-2fw3.onrender.com/api"
 });
 
 export default function StudentSignup() {

@@ -9,7 +9,7 @@ export default function ApprovedQR({ leaveId }) {
   const generateQR = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/qr/generate/${leaveId}`,
+        `https://hostel-backend-2fw3.onrender.com/api/qr/generate/${leaveId}`,
         {
           headers: {
             Authorization: `Bearer ${token}` // ✅ FIX

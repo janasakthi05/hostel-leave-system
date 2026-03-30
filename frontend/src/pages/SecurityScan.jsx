@@ -3,7 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import api from "../services/api";
 import LogoutButton from "../components/LogoutButton";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://hostel-backend-2fw3.onrender.com";
 
 export default function SecurityScan() {
   const [qrToken, setQrToken] = useState("");
