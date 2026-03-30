@@ -1,9 +1,12 @@
-const twilio = require("twilio");
+let client = null;
 
-const client = twilio(
-  process.env.TWILIO_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+if (process.env.TWILIO_SID && process.env.TWILIO_SID.startsWith("AC")) {
+  const twilio = require("twilio");
+  client = twilio(
+    process.env.TWILIO_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
+}
 
 const sendSMS = async (mobile, message) => {
   try {
@@ -12,10 +15,15 @@ const sendSMS = async (mobile, message) => {
       return;
     }
 
+    if (!client) {
+      console.log("⚠️ Twilio not configured, skipping SMS");
+      return;
+    }
+
     await client.messages.create({
       body: message,
       from: process.env.TWILIO_PHONE,
-      to: `+91${mobile}` // India country code
+      to: `+91${mobile}`
     });
 
     console.log("✅ SMS sent via Twilio to", mobile);
