@@ -1,8 +1,8 @@
 const LeaveRequest = require("../models/LeaveRequest");
+const User = require("../models/User");            // ✅ ADD
+const sendSMS = require("../utils/sendSMS");   
 
-/**
- * APPLY LEAVE
- */
+
 exports.applyLeave = async (req, res) => {
   try {
     const { purpose, fromDate, toDate } = req.body;
@@ -23,6 +23,18 @@ exports.applyLeave = async (req, res) => {
     });
 
     await leave.save();
+
+      // 🔔 FETCH STUDENT (User)
+    const student = await User.findById(req.user.id);
+      console.log("📨 Applying leave - SMS trigger started");
+      console.log("📞 Parent mobile:", student.parentMobile);
+
+    // 🔔 SEND SMS TO PARENT
+    await sendSMS(
+  student.parentMobile,
+  "KEC Hostel Alert: your son/Daugter are want to take leave."
+);
+
 
     return res.status(201).json({
       message: "Leave request submitted successfully",

@@ -48,7 +48,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-
+    parentMobile: {
+      type: String,
+      required: true
+    },
     // ✅ ID Card Photo (stored as file path)
     idCardPhoto: {
       type: String,

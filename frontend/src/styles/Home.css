@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* PAGE */
+.auth-page {
+  width: 100vw;
+  height: 100vh;
+  background: #1a1a2e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* WRAPPER */
+.auth-wrapper {
+  position: relative;
+  width: 900px;
+  height: 520px;
+  border: 2px solid #00d4ff;
+  box-shadow: 0 0 25px #00d4ff;
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.credentials-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  color: #fff;
+  z-index: 5;
+}
+
+.credentials-panel h2 {
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #c7d2fe;
+  margin-bottom: 30px;
+}
+
+/* BUTTONS */
+.submit-button {
+  display: block;
+  width: 100%;
+  margin-bottom: 18px;
+  height: 45px;
+  border-radius: 30px;
+  border: 2px solid #00d4ff;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+
+.submit-button:hover {
+  background: #00d4ff;
+  color: #1a1a2e;
+}
+
+/* RIGHT WELCOME */
+.welcome-section {
+  position: absolute;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 60px;
+  color: #fff;
+  z-index: 4;
+}
+
+.welcome-section h2 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.welcome-section p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #dbeafe;
+}
+
+/* SHAPES */
+.background-shape {
+  position: absolute;
+  right: 0;
+  top: -5px;
+  width: 900px;
+  height: 600px;
+  background: linear-gradient(45deg, #1a1a2e, #00d4ff);
+  transform: rotate(10deg) skewY(40deg);
+  transform-origin: bottom right;
+  z-index: 0;
+}
+
+.secondary-shape {
+  position: absolute;
+  left: 250px;
+  top: 100%;
+  width: 900px;
+  height: 700px;
+  background: #1a1a2e;
+  border-top: 3px solid #00d4ff;
+  z-index: 0;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .auth-wrapper {
+    width: 100%;
+    height: auto;
+  }
+
+  .credentials-panel,
+  .welcome-section {
+    width: 100%;
+    position: relative;
+  }
+
+  .welcome-section,
+  .background-shape,
+  .secondary-shape {
+    display: none;
+  }
+}

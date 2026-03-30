@@ -2,18 +2,20 @@ const LeaveRequest = require("../models/LeaveRequest");
 
 exports.scanQR = async (req, res) => {
   try {
-    const { qrToken } = req.body;
+    let { qrToken } = req.body;
 
-    // 1️⃣ QR token must be present
     if (!qrToken) {
-      return res.status(400).json({ message: "QR token missing" });
+      return res.status(400).json({
+        status: "DENIED",
+        message: "QR token missing"
+      });
     }
 
-    // 2️⃣ Find approved & unused leave with this QR
+    qrToken = qrToken.trim();
+
     const leave = await LeaveRequest.findOne({
       qrToken,
-      status: "APPROVED",
-      isUsed: false
+      status: "APPROVED"
     }).populate(
       "studentId",
       "name email hostelBlock roomNumber idCardPhoto"
@@ -21,40 +23,54 @@ exports.scanQR = async (req, res) => {
 
     if (!leave) {
       return res.status(401).json({
-        message: "Invalid, expired, or already used QR"
+        status: "DENIED",
+        message: "Invalid QR token"
       });
     }
 
-    // 3️⃣ Validate student
+    if (leave.isUsed) {
+      return res.status(403).json({
+        status: "DENIED",
+        message: "QR already used"
+      });
+    }
+
     if (!leave.studentId) {
       return res.status(400).json({
+        status: "DENIED",
         message: "Student data not found"
       });
     }
 
     const now = new Date();
 
-    // 4️⃣ Validate leave time window
-    if (now < leave.fromDate || now > leave.toDate) {
+    if (now < new Date(leave.fromDate)) {
       return res.status(403).json({
-        message: "QR expired or not yet valid"
+        status: "DENIED",
+        message: "QR not yet valid"
       });
     }
 
-    // 5️⃣ Mark QR as used & log exit
+    if (now > new Date(leave.toDate)) {
+      return res.status(403).json({
+        status: "DENIED",
+        message: "QR expired"
+      });
+    }
+
     leave.isUsed = true;
     leave.exitTime = now;
     await leave.save();
 
-    // 6️⃣ ACCESS GRANTED RESPONSE
     return res.json({
+      status: "GRANTED",
       message: "ACCESS GRANTED",
       student: {
         name: leave.studentId.name,
         email: leave.studentId.email,
         hostelBlock: leave.studentId.hostelBlock,
-        roomNumber: leave.studentId.rollNumber,          // ✅ FIXED
-        idCardPhoto: leave.studentId.idCardPhoto // ✅ READY
+        roomNumber: leave.studentId.roomNumber,
+        idCardPhoto: leave.studentId.idCardPhoto
       },
       leaveDetails: {
         purpose: leave.purpose,
@@ -62,11 +78,14 @@ exports.scanQR = async (req, res) => {
         validTill: leave.toDate,
         approvedAt: leave.approvedAt
       },
-      exitTime: now
+      scannedAt: now
     });
 
-  } catch (err) {
-    console.error("SECURITY SCAN ERROR 👉", err);
-    return res.status(500).json({ message: "Server error" });
+  } catch (error) {
+    console.error("SECURITY SCAN ERROR:", error);
+    return res.status(500).json({
+      status: "ERROR",
+      message: "Internal server error"
+    });
   }
 };

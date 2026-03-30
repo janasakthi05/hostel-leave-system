@@ -6,22 +6,25 @@ export default function ApprovedQR({ leaveId }) {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const generateQR = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:5000/api/qr/generate/${leaveId}`,
-          {
-            headers: { Authorization: token }
+  const generateQR = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/qr/generate/${leaveId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // ✅ FIX
           }
-        );
-        setQrImage(res.data.qrImage);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+        }
+      );
+      setQrImage(res.data.qrImage);
+    } catch (err) {
+      console.error("QR generation error:", err);
+    }
+  };
 
-    generateQR();
-  }, [leaveId]);
+  generateQR();
+}, [leaveId]);
+
 
   return (
     <div>

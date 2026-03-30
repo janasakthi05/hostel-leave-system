@@ -3,22 +3,38 @@ import { Html5Qrcode } from "html5-qrcode";
 import api from "../services/api";
 import LogoutButton from "../components/LogoutButton";
 
+const BACKEND_URL = "http://localhost:5000";
+
 export default function SecurityScan() {
   const [qrToken, setQrToken] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [showCamera, setShowCamera] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const qrScannerRef = useRef(null);
 
+  const stopCamera = async () => {
+    if (qrScannerRef.current) {
+      try {
+        await qrScannerRef.current.stop();
+        await qrScannerRef.current.clear();
+      } catch {}
+    }
+  };
+
   const scanQR = async (tokenFromCamera) => {
+    if (processing) return;
+
+    setProcessing(true);
     setError("");
     setResult(null);
 
-    const tokenToUse = tokenFromCamera || qrToken;
+    const tokenToUse = (tokenFromCamera || qrToken).trim();
 
     if (!tokenToUse) {
       setError("Please enter or scan QR token");
+      setProcessing(false);
       return;
     }
 
@@ -26,17 +42,21 @@ export default function SecurityScan() {
       const res = await api.post("/security/scan", {
         qrToken: tokenToUse
       });
-      setResult(res.data);
-      setShowCamera(false);
-      stopCamera();
+
+      if (res.data.status === "GRANTED") {
+        setResult(res.data);
+      } else {
+        setError(res.data.message || "Access denied");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Access denied");
+    } finally {
       setShowCamera(false);
-      stopCamera();
+      await stopCamera();
+      setProcessing(false);
     }
   };
 
-  // Start camera when Scan button clicked
   useEffect(() => {
     if (!showCamera) return;
 
@@ -45,10 +65,12 @@ export default function SecurityScan() {
     qrScannerRef.current
       .start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        { fps: 10, qrbox: 260 },
         (decodedText) => {
-          setQrToken(decodedText);
-          scanQR(decodedText);
+          if (!processing) {
+            setQrToken(decodedText);
+            scanQR(decodedText);
+          }
         }
       )
       .catch(() => {
@@ -59,128 +81,164 @@ export default function SecurityScan() {
     return () => stopCamera();
   }, [showCamera]);
 
-  const stopCamera = () => {
-    if (qrScannerRef.current) {
-      qrScannerRef.current
-        .stop()
-        .then(() => qrScannerRef.current.clear())
-        .catch(() => {});
-    }
-  };
-
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#f4f6f8",
-        padding: 40,
-        fontFamily:
-          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
-        fontSize: 16,
-        lineHeight: 1.6,
-        color: "#111"
+        background: "linear-gradient(135deg, #0f172a, #020617)",
+        padding: "60px 20px",
+        fontFamily: "Inter, system-ui, sans-serif",
+        color: "#e5e7eb"
       }}
     >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto" }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 30
+            marginBottom: 40
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 700 }}>
-            🔐 Security Gate Verification
+          <h2 style={{ fontSize: 26, fontWeight: 700, color: "#f8fafc" }}>
+            Security Gate Verification
           </h2>
           <LogoutButton />
         </div>
 
-        {/* QR INPUT CARD */}
         <div
           style={{
-            background: "#ffffff",
-            padding: 26,
-            borderRadius: 14,
-            boxShadow: "0 6px 16px rgba(0,0,0,0.1)",
-            width: 400
+            background: "#020617",
+            borderRadius: 18,
+            padding: 30,
+            width: 420,
+            boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+            border: "1px solid #1e293b"
           }}
         >
-          <label style={{ fontWeight: 600, fontSize: 17 }}>
+          <label
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#cbd5f5",
+              marginBottom: 6,
+              display: "block"
+            }}
+          >
             QR Token
           </label>
 
           <input
-            placeholder="Scan or paste QR token"
             value={qrToken}
             onChange={(e) => setQrToken(e.target.value)}
+            placeholder="Scan or paste QR token"
             style={{
               width: "100%",
-              padding: 12,
-              fontSize: 16,
-              borderRadius: 8,
-              border: "2px solid #cbd5e1",
-              marginBottom: 18
+              padding: 14,
+              borderRadius: 12,
+              border: "1px solid #334155",
+              background: "#020617",
+              color: "#f8fafc",
+              fontSize: 15,
+              outline: "none",
+              marginBottom: 20
             }}
           />
 
           <button
             onClick={() => setShowCamera(true)}
+            disabled={processing}
             style={{
               width: "100%",
               padding: 14,
-              fontSize: 17,
-              fontWeight: 700,
-              borderRadius: 8,
+              borderRadius: 14,
               border: "none",
-              background: "#1d4ed8",
+              fontSize: 15,
+              fontWeight: 600,
+              background: processing ? "#334155" : "#6366f1",
               color: "#ffffff",
-              cursor: "pointer"
+              cursor: processing ? "not-allowed" : "pointer"
             }}
           >
-            📷 Scan QR
+            Scan QR Code
           </button>
 
-          {/* CAMERA VIEW */}
           {showCamera && (
-            <div style={{ marginTop: 20 }}>
-              <div id="qr-reader" style={{ width: "100%" }} />
-              <p style={{ marginTop: 8 }}>Scanning QR...</p>
+            <div
+              style={{
+                marginTop: 22,
+                padding: 12,
+                background: "#020617",
+                borderRadius: 14,
+                border: "1px dashed #475569"
+              }}
+            >
+              <div id="qr-reader" />
+              <p
+                style={{
+                  textAlign: "center",
+                  marginTop: 10,
+                  fontSize: 13,
+                  color: "#94a3b8"
+                }}
+              >
+                Scanning…
+              </p>
             </div>
           )}
 
-          {/* MANUAL VERIFY */}
           <button
             onClick={() => scanQR()}
+            disabled={processing}
             style={{
-              marginTop: 12,
+              marginTop: 14,
               width: "100%",
-              padding: 12,
-              fontSize: 15,
-              borderRadius: 8,
-              border: "2px solid #1d4ed8",
-              background: "#ffffff",
-              color: "#1d4ed8",
-              fontWeight: 600
+              padding: 13,
+              borderRadius: 14,
+              border: "1px solid #334155",
+              background: "#020617",
+              color: "#e5e7eb",
+              fontSize: 14,
+              cursor: processing ? "not-allowed" : "pointer"
             }}
           >
             Verify Manually
           </button>
         </div>
 
-        {/* ACCESS GRANTED */}
         {result && (
           <div
             style={{
-              marginTop: 35,
-              background: "#ecfdf5",
-              border: "3px solid #22c55e",
-              padding: 28,
-              borderRadius: 16,
-              maxWidth: 650
+              marginTop: 40,
+              background: "linear-gradient(135deg, #052e16, #022c22)",
+              padding: 30,
+              borderRadius: 18,
+              border: "1px solid #14532d"
             }}
           >
-            <h3 style={{ color: "#166534" }}>✅ ACCESS GRANTED</h3>
+            <h3 style={{ color: "#86efac", marginBottom: 14 }}>
+              ACCESS GRANTED
+            </h3>
+
+            {result.student.idCardPhoto && (
+              <img
+                src={
+                  result.student.idCardPhoto.startsWith("http")
+                    ? result.student.idCardPhoto
+                    : `${BACKEND_URL}${result.student.idCardPhoto}`
+                }
+                alt="Student ID"
+                style={{
+                  width: 120,
+                  height: 120,
+                  objectFit: "cover",
+                  borderRadius: 12,
+                  border: "3px solid #22c55e",
+                  marginBottom: 16
+                }}
+              />
+            )}
+
             <p><b>Name:</b> {result.student.name}</p>
             <p><b>Email:</b> {result.student.email}</p>
             <p><b>Hostel Block:</b> {result.student.hostelBlock}</p>
@@ -189,20 +247,20 @@ export default function SecurityScan() {
           </div>
         )}
 
-        {/* ACCESS DENIED */}
         {error && (
           <div
             style={{
-              marginTop: 35,
-              background: "#fff5f5",
-              border: "3px solid #ef4444",
-              padding: 28,
-              borderRadius: 16,
-              maxWidth: 650
+              marginTop: 40,
+              background: "linear-gradient(135deg, #450a0a, #1f0707)",
+              padding: 30,
+              borderRadius: 18,
+              border: "1px solid #7f1d1d"
             }}
           >
-            <h3 style={{ color: "#991b1b" }}>❌ ACCESS DENIED</h3>
-            <p>{error}</p>
+            <h3 style={{ color: "#fca5a5", marginBottom: 10 }}>
+              ACCESS DENIED
+            </h3>
+            <p style={{ color: "#fecaca" }}>{error}</p>
           </div>
         )}
       </div>

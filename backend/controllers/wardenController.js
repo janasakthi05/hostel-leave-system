@@ -3,21 +3,25 @@ const crypto = require("crypto");
 
 // View pending requests
 exports.getPendingRequests = async (req, res) => {
-  const twentyFourHoursAgo = new Date(
-    Date.now() - 24 * 60 * 60 * 1000
-  );
+  try {
+    const twentyFourHoursAgo = new Date(
+      Date.now() - 24 * 60 * 60 * 1000
+    );
 
-  const requests = await LeaveRequest.find({
-    $or: [
-      { status: "PENDING" },
-      {
-        status: "REJECTED",
-        rejectedAt: { $gte: twentyFourHoursAgo }
-      }
-    ]
-  }).populate("studentId", "name email");
+    const requests = await LeaveRequest.find({
+      $or: [
+        { status: "PENDING" },
+        {
+          status: "REJECTED",
+          rejectedAt: { $gte: twentyFourHoursAgo }
+        }
+      ]
+    }).populate("studentId", "name email");
 
-  res.json(requests);
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // Approve request
@@ -29,29 +33,22 @@ exports.approveRequest = async (req, res) => {
       return res.status(404).json({ message: "Request not found" });
     }
 
-    // CASE 1: Normal approval (PENDING)
-   if (request.status === "PENDING") {
-  request.status = "APPROVED";
-  request.approvedAt = new Date();
+    if (request.status === "PENDING") {
+      request.status = "APPROVED";
+      request.approvedAt = new Date();
+      request.qrToken = crypto.randomBytes(20).toString("hex");
+      request.qrGeneratedAt = new Date();
+      await request.save();
 
-  // 🔐 Generate QR token
-  request.qrToken = crypto.randomBytes(20).toString("hex");
-  request.qrGeneratedAt = new Date();
+      return res.json({ message: "Request approved" });
+    }
 
-  await request.save();
-
-  return res.json({ message: "Request approved" });
-}
-
-    // CASE 2: Re-approval after rejection (WITHIN 24 HOURS)
     if (request.status === "REJECTED") {
-      const now = new Date();
-      const rejectedTime = new Date(request.rejectedAt);
+      const diff =
+        (Date.now() - new Date(request.rejectedAt)) /
+        (1000 * 60 * 60);
 
-      const diffInHours =
-        (now.getTime() - rejectedTime.getTime()) / (1000 * 60 * 60);
-
-      if (diffInHours > 24) {
+      if (diff > 24) {
         return res.status(400).json({
           message: "Re-approval time expired. Student must apply again."
         });
@@ -60,30 +57,34 @@ exports.approveRequest = async (req, res) => {
       request.status = "APPROVED";
       request.approvedAt = new Date();
       request.qrToken = crypto.randomBytes(20).toString("hex");
-request.qrGeneratedAt = new Date();
+      request.qrGeneratedAt = new Date();
       await request.save();
 
       return res.json({ message: "Request re-approved" });
     }
 
-    return res.status(400).json({ message: "Invalid request state" });
+    res.status(400).json({ message: "Invalid request state" });
   } catch (err) {
-    return res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-
 // Reject request
 exports.rejectRequest = async (req, res) => {
-  const { reason } = req.body;
-  const request = await LeaveRequest.findById(req.params.id);
+  try {
+    const { reason } = req.body;
+    const request = await LeaveRequest.findById(req.params.id);
 
-  if (!request) return res.status(404).json({ message: "Request not found" });
+    if (!request)
+      return res.status(404).json({ message: "Request not found" });
 
-  request.status = "REJECTED";
-  request.rejectionReason = reason;
-  request.rejectedAt = new Date();
-  await request.save();
+    request.status = "REJECTED";
+    request.rejectionReason = reason;
+    request.rejectedAt = new Date();
+    await request.save();
 
-  res.json({ message: "Request rejected with reason" });
+    res.json({ message: "Request rejected with reason" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
